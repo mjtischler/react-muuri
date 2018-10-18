@@ -1,0 +1,283 @@
+/**
+ * Copyright (c) 2015-present, Haltu Oy
+ * Released under the MIT license
+ * https://github.com/haltu/muuri/blob/master/LICENSE.md
+ */
+
+import { addLayoutTick, cancelLayoutTick } from '../ticker.js';
+
+import Queue from '../Queue/Queue.js';
+
+import addClass from '../utils/addClass.js';
+import getTranslate from '../utils/getTranslate.js';
+import getTranslateString from '../utils/getTranslateString.js';
+import removeClass from '../utils/removeClass.js';
+import setStyles from '../utils/setStyles.js';
+
+/**
+ * Layout manager for Item instance.
+ *
+ * @class
+ * @param {Item} item
+ */
+const ItemLayout = (item) => {
+  this._item = item;
+  this._isActive = false;
+  this._isDestroyed = false;
+  this._isInterrupted = false;
+  this._currentStyles = {};
+  this._targetStyles = {};
+  this._currentLeft = 0;
+  this._currentTop = 0;
+  this._offsetLeft = 0;
+  this._offsetTop = 0;
+  this._skipNextAnimation = false;
+  this._animateOptions = {
+    onFinish: this._finish.bind(this)
+  };
+  this._queue = new Queue();
+
+  // Bind animation handlers and finish method.
+  this._setupAnimation = this._setupAnimation.bind(this);
+  this._startAnimation = this._startAnimation.bind(this);
+};
+
+/**
+ * Public prototype methods
+ * ************************
+ */
+
+/**
+ * Start item layout based on it's current data.
+ *
+ * @public
+ * @memberof ItemLayout.prototype
+ * @param {Boolean} [instant=false]
+ * @param {Function} [onFinish]
+ * @returns {ItemLayout}
+ */
+ItemLayout.prototype.start = function(instant, onFinish) {
+  if (this._isDestroyed) return;
+
+  const item = this._item;
+  const element = item._element;
+  const release = item._release;
+  const gridSettings = item.getGrid()._settings;
+  const isPositioning = this._isActive;
+  const isJustReleased = release._isActive && release._isPositioningStarted === false;
+  const animDuration = isJustReleased
+    ? gridSettings.dragReleaseDuration
+    : gridSettings.layoutDuration;
+  const animEasing = isJustReleased ? gridSettings.dragReleaseEasing : gridSettings.layoutEasing;
+  const animEnabled = !instant && !this._skipNextAnimation && animDuration > 0;
+  let isAnimating;
+
+  // If the item is currently positioning process current layout callback
+  // queue with interrupted flag on.
+  if (isPositioning) this._queue.flush(true, item);
+
+  // Mark release positioning as started.
+  if (isJustReleased) release._isPositioningStarted = true;
+
+  // Push the callback to the callback queue.
+  if (typeof onFinish === 'function') this._queue.add(onFinish);
+
+  // If no animations are needed, easy peasy!
+  if (!animEnabled) {
+    this._updateOffsets();
+    this._updateTargetStyles();
+    isPositioning && cancelLayoutTick(item._id);
+    isAnimating = item._animate.isAnimating();
+    this.stop(false, this._targetStyles);
+    !isAnimating && setStyles(element, this._targetStyles);
+    this._skipNextAnimation = false;
+    return this._finish();
+  }
+
+  // Set item active and store some data for the animation that is about to be
+  // triggered.
+  this._isActive = true;
+  this._animateOptions.easing = animEasing;
+  this._animateOptions.duration = animDuration;
+  this._isInterrupted = isPositioning;
+
+  // Start the item's layout animation in the next tick.
+  addLayoutTick(item._id, this._setupAnimation, this._startAnimation);
+
+  return this;
+};
+
+/**
+ * Stop item's position animation if it is currently animating.
+ *
+ * @public
+ * @memberof ItemLayout.prototype
+ * @param {Boolean} [processCallbackQueue=false]
+ * @param {Object} [targetStyles]
+ * @returns {ItemLayout}
+ */
+ItemLayout.prototype.stop = function(processCallbackQueue, targetStyles) {
+  if (this._isDestroyed || !this._isActive) return this;
+
+  const item = this._item;
+
+  // Cancel animation init.
+  cancelLayoutTick(item._id);
+
+  // Stop animation.
+  item._animate.stop(targetStyles);
+
+  // Remove positioning class.
+  removeClass(item._element, item.getGrid()._settings.itemPositioningClass);
+
+  // Reset active state.
+  this._isActive = false;
+
+  // Process callback queue if needed.
+  if (processCallbackQueue) this._queue.flush(true, item);
+
+  return this;
+};
+
+/**
+ * Destroy the instance and stop current animation if it is running.
+ *
+ * @public
+ * @memberof ItemLayout.prototype
+ * @returns {ItemLayout}
+ */
+ItemLayout.prototype.destroy = function() {
+  if (this._isDestroyed) return this;
+  this.stop(true, {});
+  this._queue.destroy();
+  this._item = this._currentStyles = this._targetStyles = this._animateOptions = null;
+  this._isDestroyed = true;
+  return this;
+};
+
+/**
+ * Private prototype methods
+ * *************************
+ */
+
+/**
+ * Calculate and update item's current layout offset data.
+ *
+ * @private
+ * @memberof ItemLayout.prototype
+ */
+ItemLayout.prototype._updateOffsets = function() {
+  if (this._isDestroyed) return;
+
+  const item = this._item;
+  const migrate = item._migrate;
+  const release = item._release;
+
+  this._offsetLeft = release._isActive
+    ? release._containerDiffX
+    : migrate._isActive
+      ? migrate._containerDiffX
+      : 0;
+
+  this._offsetTop = release._isActive
+    ? release._containerDiffY
+    : migrate._isActive
+      ? migrate._containerDiffY
+      : 0;
+};
+
+/**
+ * Calculate and update item's layout target styles.
+ *
+ * @private
+ * @memberof ItemLayout.prototype
+ */
+ItemLayout.prototype._updateTargetStyles = function() {
+  if (this._isDestroyed) return;
+
+  const item = this._item;
+
+  this._targetStyles.transform = getTranslateString(
+    item._left + this._offsetLeft,
+    item._top + this._offsetTop
+  );
+};
+
+/**
+ * Finish item layout procedure.
+ *
+ * @private
+ * @memberof ItemLayout.prototype
+ */
+ItemLayout.prototype._finish = function() {
+  if (this._isDestroyed) return;
+
+  const item = this._item;
+  const migrate = item._migrate;
+  const release = item._release;
+
+  // Mark the item as inactive and remove positioning classes.
+  if (this._isActive) {
+    this._isActive = false;
+    removeClass(item._element, item.getGrid()._settings.itemPositioningClass);
+  }
+
+  // Finish up release and migration.
+  if (release._isActive) release.stop();
+  if (migrate._isActive) migrate.stop();
+
+  // Process the callback queue.
+  this._queue.flush(false, item);
+};
+
+/**
+ * Prepare item for layout animation.
+ *
+ * @private
+ * @memberof ItemLayout.prototype
+ */
+ItemLayout.prototype._setupAnimation = function() {
+  const element = this._item._element;
+  const translate = getTranslate(element);
+  this._currentLeft = translate.x;
+  this._currentTop = translate.y;
+};
+
+/**
+ * Start layout animation.
+ *
+ * @private
+ * @memberof ItemLayout.prototype
+ */
+ItemLayout.prototype._startAnimation = function() {
+  const item = this._item;
+  const element = item._element;
+  const grid = item.getGrid();
+  const settings = grid._settings;
+
+  // Let's update the offset data and target styles.
+  this._updateOffsets();
+  this._updateTargetStyles();
+
+  // If the item is already in correct position let's quit early.
+  if (
+    item._left === this._currentLeft - this._offsetLeft &&
+    item._top === this._currentTop - this._offsetTop
+  ) {
+    if (this._isInterrupted) this.stop(false, this._targetStyles);
+    this._isActive = false;
+    this._finish();
+    return;
+  }
+
+  // Set item's positioning class if needed.
+  !this._isInterrupted && addClass(element, settings.itemPositioningClass);
+
+  // Get current styles for animation.
+  this._currentStyles.transform = getTranslateString(this._currentLeft, this._currentTop);
+
+  // Animate.
+  item._animate.start(this._currentStyles, this._targetStyles, this._animateOptions);
+};
+
+export default ItemLayout;

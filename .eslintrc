@@ -18,6 +18,9 @@
     "space-before-function-paren": 0,
 
     // allow specifying true explicitly for boolean props
-    "react/jsx-boolean-value": 0
+    "react/jsx-boolean-value": 0,
+    "semi": [2, "always"],
+    "brace-style": ["off"],
+    "standard/no-callback-literal": ["off"]
   }
 }
