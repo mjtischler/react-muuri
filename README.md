@@ -17,10 +17,20 @@ npm install --save react-muuri
 
 ```jsx
 import React, { Component } from 'react'
-
 import MuuriGrid from 'react-muuri';
 
-class Example extends Component {
+const styles = {
+    item: {
+      position: 'absolute',  // This is required to be declared explicitly at the `item` level.
+      width: '200px',
+      height: '200px',
+      margin: '20px',
+      backgroundColor: 'blue',
+      color: 'white'
+    }
+}
+
+class App extends Component {
   componentDidMount() {
     this.grid = new MuuriGrid({
       container: '.grid',
@@ -33,12 +43,22 @@ class Example extends Component {
   render () {
     return (
       <div className="grid">
-        <div className="item"></div>
-        <div className="item"></div>
+        <div className="item" style={styles.item}>
+          <div className="item-content">
+            Box 1
+          </div>
+        </div>
+        <div className="item" style={styles.item}>
+          <div className="item-content">
+            Box 2
+          </div>
+        </div>
       </div>
     )
   }
 }
+
+export default App;
 ```
 
 ## License

@@ -2,7 +2,7 @@
   "name": "react-muuri",
   "version": "0.1.0",
   "description": "A React implementation of Muuri",
-  "author": "mjtischler",
+  "author": "Matt Tischler",
   "license": "MIT",
   "repository": "mjtischler/react-muuri",
   "main": "dist/index.js",
