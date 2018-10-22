@@ -56,5 +56,9 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "dependencies": {
+    "hammerjs": "^2.0.8",
+    "web-animations-js": "^2.3.1"
+  }
 }

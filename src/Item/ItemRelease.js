@@ -3,6 +3,7 @@
  * Released under the MIT license
  * https://github.com/haltu/muuri/blob/master/LICENSE.md
  */
+import { Component } from 'react';
 
 import { eventDragReleaseStart, eventDragReleaseEnd } from '../shared.js';
 
@@ -23,133 +24,136 @@ const tempStyles = {};
  * @class
  * @param {Item} item
  */
-function ItemRelease(item) {
-  this._item = item;
-  this._isActive = false;
-  this._isDestroyed = false;
-  this._isPositioningStarted = false;
-  this._containerDiffX = 0;
-  this._containerDiffY = 0;
-}
-
-/**
- * Public prototype methods
- * ************************
- */
-
-/**
- * Start the release process of an item.
- *
- * @public
- * @memberof ItemRelease.prototype
- * @returns {ItemRelease}
- */
-ItemRelease.prototype.start = function() {
-  if (this._isDestroyed || this._isActive) return this;
-
-  const item = this._item;
-  const grid = item.getGrid();
-
-  // Flag release as active.
-  this._isActive = true;
-
-  // Add release class name to the released element.
-  addClass(item._element, grid._settings.itemReleasingClass);
-
-  // Emit dragReleaseStart event.
-  grid._emit(eventDragReleaseStart, item);
-
-  // Position the released item.
-  item._layout.start(false);
-
-  return this;
-};
-
-/**
- * End the release process of an item. This method can be used to abort an
- * ongoing release process (animation) or finish the release process.
- *
- * @public
- * @memberof ItemRelease.prototype
- * @param {Boolean} [abort=false]
- *  - Should the release be aborted? When true, the release end event won't be
- *    emitted. Set to true only when you need to abort the release process
- *    while the item is animating to it's position.
- * @param {Object} [currentStyles]
- *  - Optional current translateX and translateY styles.
- * @returns {ItemRelease}
- */
-ItemRelease.prototype.stop = function(abort, currentStyles) {
-  if (this._isDestroyed || !this._isActive) return this;
-
-  const item = this._item;
-  const element = item._element;
-  const grid = item.getGrid();
-  const container = grid._element;
-  const translate;
-
-  // Reset data and remove releasing class name from the element.
-  this._reset();
-
-  // If the released element is outside the grid's container element put it
-  // back there and adjust position accordingly.
-  if (element.parentNode !== container) {
-    if (!currentStyles) {
-      if (abort) {
-        translate = getTranslate(element);
-        tempStyles.transform = getTranslateString(
-          translate.x - this._containerDiffX,
-          translate.y - this._containerDiffY
-        );
-      } else {
-        tempStyles.transform = getTranslateString(item._left, item._top);
-      }
-      currentStyles = tempStyles;
-    }
-    container.appendChild(element);
-    setStyles(element, currentStyles);
+class ItemRelease extends Component {
+  constructor(item) {
+    super(item);
+    this._item = item;
+    this._isActive = false;
+    this._isDestroyed = false;
+    this._isPositioningStarted = false;
+    this._containerDiffX = 0;
+    this._containerDiffY = 0;
   }
 
-  // Emit dragReleaseEnd event.
-  if (!abort) grid._emit(eventDragReleaseEnd, item);
+  /**
+   * Public prototype methods
+   * ************************
+   */
 
-  return this;
-};
+  /**
+   * Start the release process of an item.
+   *
+   * @public
+   * @memberof ItemRelease.prototype
+   * @returns {ItemRelease}
+   */
+  start() {
+    if (this._isDestroyed || this._isActive) return this;
 
-/**
- * Destroy instance.
- *
- * @public
- * @memberof ItemRelease.prototype
- * @returns {ItemRelease}
- */
-ItemRelease.prototype.destroy = function() {
-  if (this._isDestroyed) return this;
-  this.stop(true);
-  this._item = null;
-  this._isDestroyed = true;
-  return this;
-};
+    const item = this._item;
+    const grid = item.getGrid();
 
-/**
- * Private prototype methods
- * *************************
- */
+    // Flag release as active.
+    this._isActive = true;
 
-/**
- * Reset public data and remove releasing class.
- *
- * @private
- * @memberof ItemRelease.prototype
- */
-ItemRelease.prototype._reset = function() {
-  if (this._isDestroyed) return;
-  const item = this._item;
-  this._isActive = false;
-  this._isPositioningStarted = false;
-  this._containerDiffX = 0;
-  this._containerDiffY = 0;
-  removeClass(item._element, item.getGrid()._settings.itemReleasingClass);
-};
+    // Add release class name to the released element.
+    addClass(item._element, grid._settings.itemReleasingClass);
+
+    // Emit dragReleaseStart event.
+    grid._emit(eventDragReleaseStart, item);
+
+    // Position the released item.
+    item._layout.start(false);
+
+    return this;
+  }
+
+  /**
+   * End the release process of an item. This method can be used to abort an
+   * ongoing release process (animation) or finish the release process.
+   *
+   * @public
+   * @memberof ItemRelease.prototype
+   * @param {Boolean} [abort=false]
+   *  - Should the release be aborted? When true, the release end event won't be
+   *    emitted. Set to true only when you need to abort the release process
+   *    while the item is animating to it's position.
+   * @param {Object} [currentStyles]
+   *  - Optional current translateX and translateY styles.
+   * @returns {ItemRelease}
+   */
+  stop(abort, currentStyles) {
+    if (this._isDestroyed || !this._isActive) return this;
+
+    const item = this._item;
+    const element = item._element;
+    const grid = item.getGrid();
+    const container = grid._element;
+    let translate;
+
+    // Reset data and remove releasing class name from the element.
+    this._reset();
+
+    // If the released element is outside the grid's container element put it
+    // back there and adjust position accordingly.
+    if (element.parentNode !== container) {
+      if (!currentStyles) {
+        if (abort) {
+          translate = getTranslate(element);
+          tempStyles.transform = getTranslateString(
+            translate.x - this._containerDiffX,
+            translate.y - this._containerDiffY
+          );
+        } else {
+          tempStyles.transform = getTranslateString(item._left, item._top);
+        }
+        currentStyles = tempStyles;
+      }
+      container.appendChild(element);
+      setStyles(element, currentStyles);
+    }
+
+    // Emit dragReleaseEnd event.
+    if (!abort) grid._emit(eventDragReleaseEnd, item);
+
+    return this;
+  }
+
+  /**
+   * Destroy instance.
+   *
+   * @public
+   * @memberof ItemRelease.prototype
+   * @returns {ItemRelease}
+   */
+  destroy() {
+    if (this._isDestroyed) return this;
+    this.stop(true);
+    this._item = null;
+    this._isDestroyed = true;
+    return this;
+  }
+
+  /**
+   * Private prototype methods
+   * *************************
+   */
+
+  /**
+   * Reset public data and remove releasing class.
+   *
+   * @private
+   * @memberof ItemRelease.prototype
+   */
+  _reset() {
+    if (this._isDestroyed) return;
+    const item = this._item;
+    this._isActive = false;
+    this._isPositioningStarted = false;
+    this._containerDiffX = 0;
+    this._containerDiffY = 0;
+    removeClass(item._element, item.getGrid()._settings.itemReleasingClass);
+  }
+}
 
 export default ItemRelease;

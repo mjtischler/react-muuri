@@ -5,9 +5,9 @@
  */
 
 // Set up the default export values.
-export const isTransformSupported = false;
-export const transformStyle = 'transform';
-export const transformProp = 'transform';
+export let isTransformSupported = false;
+export let transformStyle = 'transform';
+export let transformProp = 'transform';
 
 // Find the supported transform prop and style names.
 const style = 'transform';

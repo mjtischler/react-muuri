@@ -16,9 +16,9 @@ const tempArray = [];
  * @param {Number} [index=-1]
  */
 export default function arrayInsert(array, items, index) {
-  const startIndex = typeof index === 'number' ? index : -1;
+  let startIndex = typeof index === 'number' ? index : -1;
   if (startIndex < 0) startIndex = array.length - startIndex + 1;
 
-  array.splice.apply(array, tempArray.concat(startIndex, 0, items));
+  array.splice(...tempArray.concat(startIndex, 0, items));
   tempArray.length = 0;
 }

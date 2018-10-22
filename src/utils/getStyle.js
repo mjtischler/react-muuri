@@ -16,7 +16,7 @@ const stylesCache = typeof WeakMap === 'function' ? new WeakMap() : null;
  * @returns {String}
  */
 export default function getStyle(element, style) {
-  const styles = stylesCache && stylesCache.get(element);
+  let styles = stylesCache && stylesCache.get(element);
   if (!styles) {
     styles = window.getComputedStyle(element, null);
     stylesCache && stylesCache.set(element, styles);

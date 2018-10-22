@@ -4,7 +4,7 @@
  * https://github.com/haltu/muuri/blob/master/LICENSE.md
  */
 
-const id = 0;
+let id = 0;
 
 /**
  * Returns a unique numeric id (increments a base value on every call).

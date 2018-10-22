@@ -5,6 +5,8 @@
  * https://github.com/haltu/muuri/blob/master/src/Packer/LICENSE.md
  */
 
+import { Component } from 'react';
+
 /**
  * This is the default layout algorithm for Muuri. Based on MAXRECTS approach
  * as described by Jukka Jylänki in his survey: "A Thousand Ways to Pack the
@@ -12,94 +14,180 @@
  *
  * @class
  */
-const Packer = () => {
-  this._slots = [];
-  this._slotSizes = [];
-  this._freeSlots = [];
-  this._newSlots = [];
-  this._rectItem = {};
-  this._rectStore = [];
-  this._rectId = 0;
+class Packer extends Component {
+  constructor() {
+    super();
+    this._slots = [];
+    this._slotSizes = [];
+    this._freeSlots = [];
+    this._newSlots = [];
+    this._rectItem = {};
+    this._rectStore = [];
+    this._rectId = 0;
 
-  // The layout return data, which will be populated in getLayout.
-  this._layout = {
-    slots: null,
-    setWidth: false,
-    setHeight: false,
-    width: false,
-    height: false
-  };
+    // The layout return data, which will be populated in getLayout.
+    this._layout = {
+      slots: null,
+      setWidth: false,
+      setHeight: false,
+      width: false,
+      height: false
+    };
 
-  // Bind sort handlers.
-  this._sortRectsLeftTop = this._sortRectsLeftTop.bind(this);
-  this._sortRectsTopLeft = this._sortRectsTopLeft.bind(this);
-};
-
-/**
- * @public
- * @memberof Packer.prototype
- * @param {Item[]} items
- * @param {Number} width
- * @param {Number} height
- * @param {Number[]} [slots]
- * @param {Object} [options]
- * @param {Boolean} [options.fillGaps=false]
- * @param {Boolean} [options.horizontal=false]
- * @param {Boolean} [options.alignRight=false]
- * @param {Boolean} [options.alignBottom=false]
- * @returns {LayoutData}
- */
-Packer.prototype.getLayout = function(items, width, height, slots, options) {
-  const layout = this._layout;
-  const fillGaps = !!(options && options.fillGaps);
-  const isHorizontal = !!(options && options.horizontal);
-  const alignRight = !!(options && options.alignRight);
-  const alignBottom = !!(options && options.alignBottom);
-  const rounding = !!(options && options.rounding);
-  const slotSizes = this._slotSizes;
-  let i;
-
-  // Reset layout data.
-  layout.slots = slots || this._slots;
-  layout.width = isHorizontal ? 0 : rounding ? Math.round(width) : width;
-  layout.height = !isHorizontal ? 0 : rounding ? Math.round(height) : height;
-  layout.setWidth = isHorizontal;
-  layout.setHeight = !isHorizontal;
-
-  // Make sure slots and slot size arrays are reset.
-  layout.slots.length = 0;
-  slotSizes.length = 0;
-
-  // No need to go further if items do not exist.
-  if (!items.length) return layout;
-
-  // Find slots for items.
-  for (i = 0; i < items.length; i++) {
-    this._addSlot(items[i], isHorizontal, fillGaps, rounding, alignRight || alignBottom);
+    // Bind sort handlers.
+    this._sortRectsLeftTop = this._sortRectsLeftTop.bind(this);
+    this._sortRectsTopLeft = this._sortRectsTopLeft.bind(this);
   }
 
-  // If the alignment is set to right we need to adjust the results.
-  if (alignRight) {
-    for (i = 0; i < layout.slots.length; i = i + 2) {
-      layout.slots[i] = layout.width - (layout.slots[i] + slotSizes[i]);
+  /**
+   * @public
+   * @memberof Packer.prototype
+   * @param {Item[]} items
+   * @param {Number} width
+   * @param {Number} height
+   * @param {Number[]} [slots]
+   * @param {Object} [options]
+   * @param {Boolean} [options.fillGaps=false]
+   * @param {Boolean} [options.horizontal=false]
+   * @param {Boolean} [options.alignRight=false]
+   * @param {Boolean} [options.alignBottom=false]
+   * @returns {LayoutData}
+   */
+  getLayout(items, width, height, slots, options) {
+    const layout = this._layout;
+    const fillGaps = !!(options && options.fillGaps);
+    const isHorizontal = !!(options && options.horizontal);
+    const alignRight = !!(options && options.alignRight);
+    const alignBottom = !!(options && options.alignBottom);
+    const rounding = !!(options && options.rounding);
+    const slotSizes = this._slotSizes;
+    let i;
+
+    // Reset layout data.
+    layout.slots = slots || this._slots;
+    layout.width = isHorizontal ? 0 : rounding ? Math.round(width) : width;
+    layout.height = !isHorizontal ? 0 : rounding ? Math.round(height) : height;
+    layout.setWidth = isHorizontal;
+    layout.setHeight = !isHorizontal;
+
+    // Make sure slots and slot size arrays are reset.
+    layout.slots.length = 0;
+    slotSizes.length = 0;
+
+    // No need to go further if items do not exist.
+    if (!items.length) return layout;
+
+    // Find slots for items.
+    for (i = 0; i < items.length; i++) {
+      this._addSlot(items[i], isHorizontal, fillGaps, rounding, alignRight || alignBottom);
     }
-  }
 
-  // If the alignment is set to bottom we need to adjust the results.
-  if (alignBottom) {
-    for (i = 1; i < layout.slots.length; i = i + 2) {
-      layout.slots[i] = layout.height - (layout.slots[i] + slotSizes[i]);
+    // If the alignment is set to right we need to adjust the results.
+    if (alignRight) {
+      for (i = 0; i < layout.slots.length; i = i + 2) {
+        layout.slots[i] = layout.width - (layout.slots[i] + slotSizes[i]);
+      }
     }
+
+    // If the alignment is set to bottom we need to adjust the results.
+    if (alignBottom) {
+      for (i = 1; i < layout.slots.length; i = i + 2) {
+        layout.slots[i] = layout.height - (layout.slots[i] + slotSizes[i]);
+      }
+    }
+
+    // Reset slots arrays and rect id.
+    slotSizes.length = 0;
+    this._freeSlots.length = 0;
+    this._newSlots.length = 0;
+    this._rectId = 0;
+
+    return layout;
   }
 
-  // Reset slots arrays and rect id.
-  slotSizes.length = 0;
-  this._freeSlots.length = 0;
-  this._newSlots.length = 0;
-  this._rectId = 0;
+  /**
+   * Add a new rectangle to the rectangle store. Returns the id of the new
+   * rectangle.
+   *
+   * @private
+   * @memberof Packer.prototype
+   * @param {Number} left
+   * @param {Number} top
+   * @param {Number} width
+   * @param {Number} height
+   * @returns {RectId}
+   */
+  _addRect(left, top, width, height) {
+    const rectId = ++this._rectId;
+    const rectStore = this._rectStore;
 
-  return layout;
-};
+    rectStore[rectId] = left || 0;
+    rectStore[++this._rectId] = top || 0;
+    rectStore[++this._rectId] = width || 0;
+    rectStore[++this._rectId] = height || 0;
+
+    return rectId;
+  }
+
+  /**
+   * Get rectangle data from the rectangle store by id. Optionally you can
+   * provide a target object where the rectangle data will be written in. By
+   * default an internal object is reused as a target object.
+   *
+   * @private
+   * @memberof Packer.prototype
+   * @param {RectId} id
+   * @param {Object} [target]
+   * @returns {Object}
+   */
+  _getRect(id, target) {
+    const rectItem = target || this._rectItem;
+    const rectStore = this._rectStore;
+
+    rectItem.left = rectStore[id] || 0;
+    rectItem.top = rectStore[++id] || 0;
+    rectItem.width = rectStore[++id] || 0;
+    rectItem.height = rectStore[++id] || 0;
+
+    return rectItem;
+  }
+
+  /**
+   * Check if two rectangles overlap.
+   *
+   * @private
+   * @memberof Packer.prototype
+   * @param {Rectangle} a
+   * @param {Rectangle} b
+   * @returns {Boolean}
+   */
+  _doRectsOverlap(a, b) {
+    return !(
+      a.left + a.width <= b.left ||
+      b.left + b.width <= a.left ||
+      a.top + a.height <= b.top ||
+      b.top + b.height <= a.top
+    );
+  }
+
+  /**
+   * Check if a rectangle is fully within another rectangle.
+   *
+   * @private
+   * @memberof Packer.prototype
+   * @param {Rectangle} a
+   * @param {Rectangle} b
+   * @returns {Boolean}
+   */
+  _isRectWithinRect(a, b) {
+    return (
+      a.left >= b.left &&
+      a.top >= b.top &&
+      a.left + a.width <= b.left + b.width &&
+      a.top + a.height <= b.top + b.height
+    );
+  }
+}
 
 /**
  * Calculate position for the layout item. Returns the left and top position
@@ -113,7 +201,7 @@ Packer.prototype.getLayout = function(items, width, height, slots, options) {
  * @param {Boolean} rounding
  * @returns {Array}
  */
-Packer.prototype._addSlot = (function() {
+Packer.prototype._addSlot = ((() => {
   const leeway = 0.001;
   const itemSlot = {};
   return function(item, isHorizontal, fillGaps, rounding, trackSize) {
@@ -262,54 +350,7 @@ Packer.prototype._addSlot = (function() {
     this._freeSlots = newSlots;
     this._newSlots = freeSlots;
   };
-})();
-
-/**
- * Add a new rectangle to the rectangle store. Returns the id of the new
- * rectangle.
- *
- * @private
- * @memberof Packer.prototype
- * @param {Number} left
- * @param {Number} top
- * @param {Number} width
- * @param {Number} height
- * @returns {RectId}
- */
-Packer.prototype._addRect = function(left, top, width, height) {
-  const rectId = ++this._rectId;
-  const rectStore = this._rectStore;
-
-  rectStore[rectId] = left || 0;
-  rectStore[++this._rectId] = top || 0;
-  rectStore[++this._rectId] = width || 0;
-  rectStore[++this._rectId] = height || 0;
-
-  return rectId;
-};
-
-/**
- * Get rectangle data from the rectangle store by id. Optionally you can
- * provide a target object where the rectangle data will be written in. By
- * default an internal object is reused as a target object.
- *
- * @private
- * @memberof Packer.prototype
- * @param {RectId} id
- * @param {Object} [target]
- * @returns {Object}
- */
-Packer.prototype._getRect = function(id, target) {
-  const rectItem = target || this._rectItem;
-  const rectStore = this._rectStore;
-
-  rectItem.left = rectStore[id] || 0;
-  rectItem.top = rectStore[++id] || 0;
-  rectItem.width = rectStore[++id] || 0;
-  rectItem.height = rectStore[++id] || 0;
-
-  return rectItem;
-};
+}))();
 
 /**
  * Punch a hole into a rectangle and split the remaining area into smaller
@@ -321,7 +362,7 @@ Packer.prototype._getRect = function(id, target) {
  * @param {Rectangle} hole
  * @returns {RectId[]}
  */
-Packer.prototype._splitRect = (function() {
+Packer.prototype._splitRect = ((() => {
   const results = [];
   return function(rect, hole) {
     // Reset old results.
@@ -370,43 +411,7 @@ Packer.prototype._splitRect = (function() {
 
     return results;
   };
-})();
-
-/**
- * Check if two rectangles overlap.
- *
- * @private
- * @memberof Packer.prototype
- * @param {Rectangle} a
- * @param {Rectangle} b
- * @returns {Boolean}
- */
-Packer.prototype._doRectsOverlap = function(a, b) {
-  return !(
-    a.left + a.width <= b.left ||
-    b.left + b.width <= a.left ||
-    a.top + a.height <= b.top ||
-    b.top + b.height <= a.top
-  );
-};
-
-/**
- * Check if a rectangle is fully within another rectangle.
- *
- * @private
- * @memberof Packer.prototype
- * @param {Rectangle} a
- * @param {Rectangle} b
- * @returns {Boolean}
- */
-Packer.prototype._isRectWithinRect = function(a, b) {
-  return (
-    a.left >= b.left &&
-    a.top >= b.top &&
-    a.left + a.width <= b.left + b.width &&
-    a.top + a.height <= b.top + b.height
-  );
-};
+}))();
 
 /**
  * Loops through an array of rectangle ids and resets all that are fully
@@ -418,7 +423,7 @@ Packer.prototype._isRectWithinRect = function(a, b) {
  * @param {RectId[]} rectIds
  * @returns {RectId[]}
  */
-Packer.prototype._purgeRects = (function() {
+Packer.prototype._purgeRects = ((() => {
   const rectA = {};
   const rectB = {};
   return function(rectIds) {
@@ -440,7 +445,7 @@ Packer.prototype._purgeRects = (function() {
 
     return rectIds;
   };
-})();
+}))();
 
 /**
  * Sort rectangles with top-left gravity.
@@ -451,7 +456,7 @@ Packer.prototype._purgeRects = (function() {
  * @param {RectId} bId
  * @returns {Number}
  */
-Packer.prototype._sortRectsTopLeft = (function() {
+Packer.prototype._sortRectsTopLeft = ((() => {
   const rectA = {};
   const rectB = {};
   return function(aId, bId) {
@@ -463,7 +468,7 @@ Packer.prototype._sortRectsTopLeft = (function() {
            rectA.left < rectB.left ? -1 : // eslint-disable-line
            rectA.left > rectB.left ? 1 : 0; // eslint-disable-line
   };
-})();
+}))();
 
 /**
  * Sort rectangles with left-top gravity.
@@ -474,7 +479,7 @@ Packer.prototype._sortRectsTopLeft = (function() {
  * @param {RectId} bId
  * @returns {Number}
  */
-Packer.prototype._sortRectsLeftTop = (function() {
+Packer.prototype._sortRectsLeftTop = ((() => {
   const rectA = {};
   const rectB = {};
   return function(aId, bId) {
@@ -486,6 +491,6 @@ Packer.prototype._sortRectsLeftTop = (function() {
            rectA.top < rectB.top ? -1 : // eslint-disable-line
            rectA.top > rectB.top ? 1 : 0; // eslint-disable-line
   };
-})();
+}))();
 
 export default Packer;

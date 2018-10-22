@@ -20,7 +20,7 @@ const actionFinish = 'finish';
  * @returns {Function}
  */
 export default function debounce(fn, wait) {
-  const timeout;
+  let timeout;
 
   if (wait > 0) {
     return function(action) {

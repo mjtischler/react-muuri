@@ -4,6 +4,8 @@
  * https://github.com/haltu/muuri/blob/master/LICENSE.md
  */
 
+import { Component } from 'react';
+
 import { eventBeforeSend, eventBeforeReceive, eventSend, eventReceive } from '../shared.js';
 
 import ItemDrag from './ItemDrag.js';
@@ -26,262 +28,265 @@ const tempStyles = {};
  * @class
  * @param {Item} item
  */
-const ItemMigrate = (item) => {
-  // Private props.
-  this._item = item;
-  this._isActive = false;
-  this._isDestroyed = false;
-  this._container = false;
-  this._containerDiffX = 0;
-  this._containerDiffY = 0;
-};
-
-/**
- * Public prototype methods
- * ************************
- */
-
-/**
- * Start the migrate process of an item.
- *
- * @public
- * @memberof ItemMigrate.prototype
- * @param {Grid} targetGrid
- * @param {GridSingleItemQuery} position
- * @param {HTMLElement} [container]
- * @returns {ItemMigrate}
- */
-ItemMigrate.prototype.start = (targetGrid, position, container) => {
-  if (this._isDestroyed) return this;
-
-  const item = this._item;
-  const element = item._element;
-  const isVisible = item.isVisible();
-  const grid = item.getGrid();
-  const settings = grid._settings;
-  const targetSettings = targetGrid._settings;
-  const targetElement = targetGrid._element;
-  const targetItems = targetGrid._items;
-  const currentIndex = grid._items.indexOf(item);
-  const targetContainer = container || document.body;
-  let targetIndex;
-  let targetItem;
-  let currentContainer;
-  let offsetDiff;
-  let containerDiff;
-  let translate;
-  let translateX;
-  let translateY;
-
-  // Get target index.
-  if (typeof position === 'number') {
-    targetIndex = normalizeArrayIndex(targetItems, position, true);
-  } else {
-    targetItem = targetGrid._getItem(position);
-    /** @todo Consider throwing an error here instead of silently failing. */
-    if (!targetItem) return this;
-    targetIndex = targetItems.indexOf(targetItem);
+class ItemMigrate extends Component {
+  constructor(item) {
+    super(item);
+    // Private props.
+    this._item = item;
+    this._isActive = false;
+    this._isDestroyed = false;
+    this._container = false;
+    this._containerDiffX = 0;
+    this._containerDiffY = 0;
   }
 
-  // Get current translateX and translateY values if needed.
-  if (item.isPositioning() || this._isActive || item.isReleasing()) {
-    translate = getTranslate(element);
-    translateX = translate.x;
-    translateY = translate.y;
-  }
+  /**
+   * Public prototype methods
+   * ************************
+   */
 
-  // Abort current positioning.
-  if (item.isPositioning()) {
-    item._layout.stop(true, { transform: getTranslateString(translateX, translateY) });
-  }
+  /**
+   * Start the migrate process of an item.
+   *
+   * @public
+   * @memberof ItemMigrate.prototype
+   * @param {Grid} targetGrid
+   * @param {GridSingleItemQuery} position
+   * @param {HTMLElement} [container]
+   * @returns {ItemMigrate}
+   */
+  start(targetGrid, position, container) {
+    if (this._isDestroyed) return this;
 
-  // Abort current migration.
-  if (this._isActive) {
-    translateX -= this._containerDiffX;
-    translateY -= this._containerDiffY;
-    this.stop(true, { transform: getTranslateString(translateX, translateY) });
-  }
+    const item = this._item;
+    const element = item._element;
+    const isVisible = item.isVisible();
+    const grid = item.getGrid();
+    const settings = grid._settings;
+    const targetSettings = targetGrid._settings;
+    const targetElement = targetGrid._element;
+    const targetItems = targetGrid._items;
+    const currentIndex = grid._items.indexOf(item);
+    const targetContainer = container || document.body;
+    let targetIndex;
+    let targetItem;
+    let currentContainer;
+    let offsetDiff;
+    let containerDiff;
+    let translate;
+    let translateX;
+    let translateY;
 
-  // Abort current release.
-  if (item.isReleasing()) {
-    translateX -= item._release._containerDiffX;
-    translateY -= item._release._containerDiffY;
-    item._release.stop(true, { transform: getTranslateString(translateX, translateY) });
-  }
+    // Get target index.
+    if (typeof position === 'number') {
+      targetIndex = normalizeArrayIndex(targetItems, position, true);
+    } else {
+      targetItem = targetGrid._getItem(position);
+      /** @todo Consider throwing an error here instead of silently failing. */
+      if (!targetItem) return this;
+      targetIndex = targetItems.indexOf(targetItem);
+    }
 
-  // Stop current visibility animations.
-  item._visibility._stopAnimation();
-
-  // Destroy current drag.
-  if (item._drag) item._drag.destroy();
-
-  // Process current visibility animation queue.
-  item._visibility._queue.flush(true, item);
-
-  // Emit beforeSend event.
-  if (grid._hasListeners(eventBeforeSend)) {
-    grid._emit(eventBeforeSend, {
-      item: item,
-      fromGrid: grid,
-      fromIndex: currentIndex,
-      toGrid: targetGrid,
-      toIndex: targetIndex
-    });
-  }
-
-  // Emit beforeReceive event.
-  if (targetGrid._hasListeners(eventBeforeReceive)) {
-    targetGrid._emit(eventBeforeReceive, {
-      item: item,
-      fromGrid: grid,
-      fromIndex: currentIndex,
-      toGrid: targetGrid,
-      toIndex: targetIndex
-    });
-  }
-
-  // Remove current classnames.
-  removeClass(element, settings.itemClass);
-  removeClass(element, settings.itemVisibleClass);
-  removeClass(element, settings.itemHiddenClass);
-
-  // Add new classnames.
-  addClass(element, targetSettings.itemClass);
-  addClass(element, isVisible ? targetSettings.itemVisibleClass : targetSettings.itemHiddenClass);
-
-  // Move item instance from current grid to target grid.
-  grid._items.splice(currentIndex, 1);
-  arrayInsert(targetItems, item, targetIndex);
-
-  // Update item's grid id reference.
-  item._gridId = targetGrid._id;
-
-  // Get current container.
-  currentContainer = element.parentNode;
-
-  // Move the item inside the target container if it's different than the
-  // current container.
-  if (targetContainer !== currentContainer) {
-    targetContainer.appendChild(element);
-    offsetDiff = getOffsetDiff(targetContainer, currentContainer, true);
-    if (!translate) {
+    // Get current translateX and translateY values if needed.
+    if (item.isPositioning() || this._isActive || item.isReleasing()) {
       translate = getTranslate(element);
       translateX = translate.x;
       translateY = translate.y;
     }
-    element.style[transformProp] = getTranslateString(
-      translateX + offsetDiff.left,
-      translateY + offsetDiff.top
-    );
-  }
 
-  // Update child element's styles to reflect the current visibility state.
-  item._child.removeAttribute('style');
-  setStyles(item._child, isVisible ? targetSettings.visibleStyles : targetSettings.hiddenStyles);
-
-  // Update display style.
-  element.style.display = isVisible ? 'block' : 'hidden';
-
-  // Get offset diff for the migration data.
-  containerDiff = getOffsetDiff(targetContainer, targetElement, true);
-
-  // Update item's cached dimensions and sort data.
-  item._refreshDimensions();
-  item._refreshSortData();
-
-  // Create new drag handler.
-  item._drag = targetSettings.dragEnabled ? new ItemDrag(item) : null;
-
-  // Setup migration data.
-  this._isActive = true;
-  this._container = targetContainer;
-  this._containerDiffX = containerDiff.left;
-  this._containerDiffY = containerDiff.top;
-
-  // Emit send event.
-  if (grid._hasListeners(eventSend)) {
-    grid._emit(eventSend, {
-      item: item,
-      fromGrid: grid,
-      fromIndex: currentIndex,
-      toGrid: targetGrid,
-      toIndex: targetIndex
-    });
-  }
-
-  // Emit receive event.
-  if (targetGrid._hasListeners(eventReceive)) {
-    targetGrid._emit(eventReceive, {
-      item: item,
-      fromGrid: grid,
-      fromIndex: currentIndex,
-      toGrid: targetGrid,
-      toIndex: targetIndex
-    });
-  }
-
-  return this;
-};
-
-/**
- * End the migrate process of an item. This method can be used to abort an
- * ongoing migrate process (animation) or finish the migrate process.
- *
- * @public
- * @memberof ItemMigrate.prototype
- * @param {Boolean} [abort=false]
- *  - Should the migration be aborted?
- * @param {Object} [currentStyles]
- *  - Optional current translateX and translateY styles.
- * @returns {ItemMigrate}
- */
-ItemMigrate.prototype.stop = (abort, currentStyles) => {
-  if (this._isDestroyed || !this._isActive) return this;
-
-  const item = this._item;
-  const element = item._element;
-  const grid = item.getGrid();
-  const gridElement = grid._element;
-  let translate;
-
-  if (this._container !== gridElement) {
-    if (!currentStyles) {
-      if (abort) {
-        translate = getTranslate(element);
-        tempStyles.transform = getTranslateString(
-          translate.x - this._containerDiffX,
-          translate.y - this._containerDiffY
-        );
-      } else {
-        tempStyles.transform = getTranslateString(item._left, item._top);
-      }
-      currentStyles = tempStyles;
+    // Abort current positioning.
+    if (item.isPositioning()) {
+      item._layout.stop(true, { transform: getTranslateString(translateX, translateY) });
     }
-    gridElement.appendChild(element);
-    setStyles(element, currentStyles);
+
+    // Abort current migration.
+    if (this._isActive) {
+      translateX -= this._containerDiffX;
+      translateY -= this._containerDiffY;
+      this.stop(true, { transform: getTranslateString(translateX, translateY) });
+    }
+
+    // Abort current release.
+    if (item.isReleasing()) {
+      translateX -= item._release._containerDiffX;
+      translateY -= item._release._containerDiffY;
+      item._release.stop(true, { transform: getTranslateString(translateX, translateY) });
+    }
+
+    // Stop current visibility animations.
+    item._visibility._stopAnimation();
+
+    // Destroy current drag.
+    if (item._drag) item._drag.destroy();
+
+    // Process current visibility animation queue.
+    item._visibility._queue.flush(true, item);
+
+    // Emit beforeSend event.
+    if (grid._hasListeners(eventBeforeSend)) {
+      grid._emit(eventBeforeSend, {
+        item,
+        fromGrid: grid,
+        fromIndex: currentIndex,
+        toGrid: targetGrid,
+        toIndex: targetIndex
+      });
+    }
+
+    // Emit beforeReceive event.
+    if (targetGrid._hasListeners(eventBeforeReceive)) {
+      targetGrid._emit(eventBeforeReceive, {
+        item,
+        fromGrid: grid,
+        fromIndex: currentIndex,
+        toGrid: targetGrid,
+        toIndex: targetIndex
+      });
+    }
+
+    // Remove current classnames.
+    removeClass(element, settings.itemClass);
+    removeClass(element, settings.itemVisibleClass);
+    removeClass(element, settings.itemHiddenClass);
+
+    // Add new classnames.
+    addClass(element, targetSettings.itemClass);
+    addClass(element, isVisible ? targetSettings.itemVisibleClass : targetSettings.itemHiddenClass);
+
+    // Move item instance from current grid to target grid.
+    grid._items.splice(currentIndex, 1);
+    arrayInsert(targetItems, item, targetIndex);
+
+    // Update item's grid id reference.
+    item._gridId = targetGrid._id;
+
+    // Get current container.
+    currentContainer = element.parentNode;
+
+    // Move the item inside the target container if it's different than the
+    // current container.
+    if (targetContainer !== currentContainer) {
+      targetContainer.appendChild(element);
+      offsetDiff = getOffsetDiff(targetContainer, currentContainer, true);
+      if (!translate) {
+        translate = getTranslate(element);
+        translateX = translate.x;
+        translateY = translate.y;
+      }
+      element.style[transformProp] = getTranslateString(
+        translateX + offsetDiff.left,
+        translateY + offsetDiff.top
+      );
+    }
+
+    // Update child element's styles to reflect the current visibility state.
+    item._child.removeAttribute('style');
+    setStyles(item._child, isVisible ? targetSettings.visibleStyles : targetSettings.hiddenStyles);
+
+    // Update display style.
+    element.style.display = isVisible ? 'block' : 'hidden';
+
+    // Get offset diff for the migration data.
+    containerDiff = getOffsetDiff(targetContainer, targetElement, true);
+
+    // Update item's cached dimensions and sort data.
+    item._refreshDimensions();
+    item._refreshSortData();
+
+    // Create new drag handler.
+    item._drag = targetSettings.dragEnabled ? new ItemDrag(item) : null;
+
+    // Setup migration data.
+    this._isActive = true;
+    this._container = targetContainer;
+    this._containerDiffX = containerDiff.left;
+    this._containerDiffY = containerDiff.top;
+
+    // Emit send event.
+    if (grid._hasListeners(eventSend)) {
+      grid._emit(eventSend, {
+        item,
+        fromGrid: grid,
+        fromIndex: currentIndex,
+        toGrid: targetGrid,
+        toIndex: targetIndex
+      });
+    }
+
+    // Emit receive event.
+    if (targetGrid._hasListeners(eventReceive)) {
+      targetGrid._emit(eventReceive, {
+        item,
+        fromGrid: grid,
+        fromIndex: currentIndex,
+        toGrid: targetGrid,
+        toIndex: targetIndex
+      });
+    }
+
+    return this;
   }
 
-  this._isActive = false;
-  this._container = null;
-  this._containerDiffX = 0;
-  this._containerDiffY = 0;
+  /**
+   * End the migrate process of an item. This method can be used to abort an
+   * ongoing migrate process (animation) or finish the migrate process.
+   *
+   * @public
+   * @memberof ItemMigrate.prototype
+   * @param {Boolean} [abort=false]
+   *  - Should the migration be aborted?
+   * @param {Object} [currentStyles]
+   *  - Optional current translateX and translateY styles.
+   * @returns {ItemMigrate}
+   */
+  stop(abort, currentStyles) {
+    if (this._isDestroyed || !this._isActive) return this;
 
-  return this;
-};
+    const item = this._item;
+    const element = item._element;
+    const grid = item.getGrid();
+    const gridElement = grid._element;
+    let translate;
 
-/**
- * Destroy instance.
- *
- * @public
- * @memberof ItemMigrate.prototype
- * @returns {ItemMigrate}
- */
-ItemMigrate.prototype.destroy = () => {
-  if (this._isDestroyed) return this;
-  this.stop(true);
-  this._item = null;
-  this._isDestroyed = true;
-  return this;
-};
+    if (this._container !== gridElement) {
+      if (!currentStyles) {
+        if (abort) {
+          translate = getTranslate(element);
+          tempStyles.transform = getTranslateString(
+            translate.x - this._containerDiffX,
+            translate.y - this._containerDiffY
+          );
+        } else {
+          tempStyles.transform = getTranslateString(item._left, item._top);
+        }
+        currentStyles = tempStyles;
+      }
+      gridElement.appendChild(element);
+      setStyles(element, currentStyles);
+    }
+
+    this._isActive = false;
+    this._container = null;
+    this._containerDiffX = 0;
+    this._containerDiffY = 0;
+
+    return this;
+  }
+
+  /**
+   * Destroy instance.
+   *
+   * @public
+   * @memberof ItemMigrate.prototype
+   * @returns {ItemMigrate}
+   */
+  destroy() {
+    if (this._isDestroyed) return this;
+    this.stop(true);
+    this._item = null;
+    this._isDestroyed = true;
+    return this;
+  }
+}
 
 export default ItemMigrate;

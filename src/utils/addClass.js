@@ -23,8 +23,8 @@ function addClassModern(element, className) {
  * @param {String} className
  */
 function addClassLegacy(element, className) {
-  if (!elementMatches(element, '.' + className)) {
-    element.className += ' ' + className;
+  if (!elementMatches(element, `.${className}`)) {
+    element.className += ` ${className}`;
   }
 }
 

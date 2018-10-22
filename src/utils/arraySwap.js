@@ -22,7 +22,7 @@ export default function arraySwap(array, index, withIndex) {
   // Normalize the indices.
   const indexA = normalizeArrayIndex(array, index);
   const indexB = normalizeArrayIndex(array, withIndex);
-  const temp;
+  let temp;
 
   // Swap the items.
   if (indexA !== indexB) {

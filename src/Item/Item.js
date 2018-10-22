@@ -29,330 +29,332 @@ import { transformProp } from '../utils/supportedTransform.js';
  * @param {HTMLElement} element
  * @param {Boolean} [isActive]
  */
-const Item = (grid, element, isActive) => {
-  const settings = grid._settings;
+class Item {
+  constructor(grid, element, isActive) {
+    const settings = grid._settings;
 
-  // Create instance id.
-  this._id = createUid();
+    // Create instance id.
+    this._id = createUid();
 
-  // Reference to connected Grid instance's id.
-  this._gridId = grid._id;
+    // Reference to connected Grid instance's id.
+    this._gridId = grid._id;
 
-  // Destroyed flag.
-  this._isDestroyed = false;
+    // Destroyed flag.
+    this._isDestroyed = false;
 
-  // Set up initial positions.
-  this._left = 0;
-  this._top = 0;
+    // Set up initial positions.
+    this._left = 0;
+    this._top = 0;
 
-  // The elements.
-  this._element = element;
-  this._child = element.children[0];
+    // The elements.
+    this._element = element;
+    this._child = element.children[0];
 
-  // If the provided item element is not a direct child of the grid container
-  // element, append it to the grid container.
-  if (element.parentNode !== grid._element) {
-    grid._element.appendChild(element);
+    // If the provided item element is not a direct child of the grid container
+    // element, append it to the grid container.
+    if (element.parentNode !== grid._element) {
+      grid._element.appendChild(element);
+    }
+
+    // Set item class.
+    addClass(element, settings.itemClass);
+
+    // If isActive is not defined, let's try to auto-detect it.
+    if (typeof isActive !== 'boolean') {
+      isActive = getStyle(element, 'display') !== 'none';
+    }
+
+    // Set up active state (defines if the item is considered part of the layout
+    // or not).
+    this._isActive = isActive;
+
+    // Set element's initial position styles.
+    element.style.left = '0';
+    element.style.top = '0';
+    element.style[transformProp] = getTranslateString(0, 0);
+
+    // Initiate item's animation controllers.
+    this._animate = new ItemAnimate(element);
+    this._animateChild = new ItemAnimate(this._child);
+
+    // Setup visibility handler.
+    this._visibility = new ItemVisibility(this);
+
+    // Set up layout handler.
+    this._layout = new ItemLayout(this);
+
+    // Set up migration handler data.
+    this._migrate = new ItemMigrate(this);
+
+    // Set up release handler
+    this._release = new ItemRelease(this);
+
+    // Set up drag handler.
+    this._drag = settings.dragEnabled ? new ItemDrag(this) : null;
+
+    // Set up the initial dimensions and sort data.
+    this._refreshDimensions();
+    this._refreshSortData();
   }
 
-  // Set item class.
-  addClass(element, settings.itemClass);
+  /**
+   * Public prototype methods
+   * ************************
+   */
 
-  // If isActive is not defined, let's try to auto-detect it.
-  if (typeof isActive !== 'boolean') {
-    isActive = getStyle(element, 'display') !== 'none';
+  /**
+   * Get the instance grid reference.
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Grid}
+   */
+  getGrid() {
+    return gridInstances[this._gridId];
   }
 
-  // Set up active state (defines if the item is considered part of the layout
-  // or not).
-  this._isActive = isActive;
-
-  // Set element's initial position styles.
-  element.style.left = '0';
-  element.style.top = '0';
-  element.style[transformProp] = getTranslateString(0, 0);
-
-  // Initiate item's animation controllers.
-  this._animate = new ItemAnimate(element);
-  this._animateChild = new ItemAnimate(this._child);
-
-  // Setup visibility handler.
-  this._visibility = new ItemVisibility(this);
-
-  // Set up layout handler.
-  this._layout = new ItemLayout(this);
-
-  // Set up migration handler data.
-  this._migrate = new ItemMigrate(this);
-
-  // Set up release handler
-  this._release = new ItemRelease(this);
-
-  // Set up drag handler.
-  this._drag = settings.dragEnabled ? new ItemDrag(this) : null;
-
-  // Set up the initial dimensions and sort data.
-  this._refreshDimensions();
-  this._refreshSortData();
-};
-
-/**
- * Public prototype methods
- * ************************
- */
-
-/**
- * Get the instance grid reference.
- *
- * @public
- * @memberof Item.prototype
- * @returns {Grid}
- */
-Item.prototype.getGrid = () => {
-  return gridInstances[this._gridId];
-};
-
-/**
- * Get the instance element.
- *
- * @public
- * @memberof Item.prototype
- * @returns {HTMLElement}
- */
-Item.prototype.getElement = () => {
-  return this._element;
-};
-
-/**
- * Get instance element's cached width.
- *
- * @public
- * @memberof Item.prototype
- * @returns {Number}
- */
-Item.prototype.getWidth = () => {
-  return this._width;
-};
-
-/**
- * Get instance element's cached height.
- *
- * @public
- * @memberof Item.prototype
- * @returns {Number}
- */
-Item.prototype.getHeight = () => {
-  return this._height;
-};
-
-/**
- * Get instance element's cached margins.
- *
- * @public
- * @memberof Item.prototype
- * @returns {Object}
- *   - The returned object contains left, right, top and bottom properties
- *     which indicate the item element's cached margins.
- */
-Item.prototype.getMargin = () => {
-  return {
-    left: this._marginLeft,
-    right: this._marginRight,
-    top: this._marginTop,
-    bottom: this._marginBottom
-  };
-};
-
-/**
- * Get instance element's cached position.
- *
- * @public
- * @memberof Item.prototype
- * @returns {Object}
- *   - The returned object contains left and top properties which indicate the
- *     item element's cached position in the grid.
- */
-Item.prototype.getPosition = () => {
-  return {
-    left: this._left,
-    top: this._top
-  };
-};
-
-/**
- * Is the item active?
- *
- * @public
- * @memberof Item.prototype
- * @returns {Boolean}
- */
-Item.prototype.isActive = () => {
-  return this._isActive;
-};
-
-/**
- * Is the item visible?
- *
- * @public
- * @memberof Item.prototype
- * @returns {Boolean}
- */
-Item.prototype.isVisible = () => {
-  return !!this._visibility && !this._visibility._isHidden;
-};
-
-/**
- * Is the item being animated to visible?
- *
- * @public
- * @memberof Item.prototype
- * @returns {Boolean}
- */
-Item.prototype.isShowing = () => {
-  return !!(this._visibility && this._visibility._isShowing);
-};
-
-/**
- * Is the item being animated to hidden?
- *
- * @public
- * @memberof Item.prototype
- * @returns {Boolean}
- */
-Item.prototype.isHiding = () => {
-  return !!(this._visibility && this._visibility._isHiding);
-};
-
-/**
- * Is the item positioning?
- *
- * @public
- * @memberof Item.prototype
- * @returns {Boolean}
- */
-Item.prototype.isPositioning = () => {
-  return !!(this._layout && this._layout._isActive);
-};
-
-/**
- * Is the item being dragged?
- *
- * @public
- * @memberof Item.prototype
- * @returns {Boolean}
- */
-Item.prototype.isDragging = () => {
-  return !!(this._drag && this._drag._isActive);
-};
-
-/**
- * Is the item being released?
- *
- * @public
- * @memberof Item.prototype
- * @returns {Boolean}
- */
-Item.prototype.isReleasing = () => {
-  return !!(this._release && this._release._isActive);
-};
-
-/**
- * Is the item destroyed?
- *
- * @public
- * @memberof Item.prototype
- * @returns {Boolean}
- */
-Item.prototype.isDestroyed = () => {
-  return this._isDestroyed;
-};
-
-/**
- * Private prototype methods
- * *************************
- */
-
-/**
- * Recalculate item's dimensions.
- *
- * @private
- * @memberof Item.prototype
- */
-Item.prototype._refreshDimensions = () => {
-  if (this._isDestroyed || this._visibility._isHidden) return;
-
-  const element = this._element;
-  const rect = element.getBoundingClientRect();
-
-  // Calculate width and height.
-  this._width = rect.width;
-  this._height = rect.height;
-
-  // Calculate margins (ignore negative margins).
-  this._marginLeft = Math.max(0, getStyleAsFloat(element, 'margin-left'));
-  this._marginRight = Math.max(0, getStyleAsFloat(element, 'margin-right'));
-  this._marginTop = Math.max(0, getStyleAsFloat(element, 'margin-top'));
-  this._marginBottom = Math.max(0, getStyleAsFloat(element, 'margin-bottom'));
-};
-
-/**
- * Fetch and store item's sort data.
- *
- * @private
- * @memberof Item.prototype
- */
-Item.prototype._refreshSortData = () => {
-  if (this._isDestroyed) return;
-
-  const data = (this._sortData = {});
-  const getters = this.getGrid()._settings.sortData;
-  let prop;
-
-  for (prop in getters) {
-    data[prop] = getters[prop](this, this._element);
+  /**
+   * Get the instance element.
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {HTMLElement}
+   */
+  getElement() {
+    return this._element;
   }
-};
 
-/**
- * Destroy item instance.
- *
- * @private
- * @memberof Item.prototype
- * @param {Boolean} [removeElement=false]
- */
-Item.prototype._destroy = (removeElement) => {
-  if (this._isDestroyed) return;
+  /**
+   * Get instance element's cached width.
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Number}
+   */
+  getWidth() {
+    return this._width;
+  }
 
-  const element = this._element;
-  const grid = this.getGrid();
-  const settings = grid._settings;
-  const index = grid._items.indexOf(this);
+  /**
+   * Get instance element's cached height.
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Number}
+   */
+  getHeight() {
+    return this._height;
+  }
 
-  // Destroy handlers.
-  this._release.destroy();
-  this._migrate.destroy();
-  this._layout.destroy();
-  this._visibility.destroy();
-  this._animate.destroy();
-  this._animateChild.destroy();
-  this._drag && this._drag.destroy();
+  /**
+   * Get instance element's cached margins.
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Object}
+   *   - The returned object contains left, right, top and bottom properties
+   *     which indicate the item element's cached margins.
+   */
+  getMargin() {
+    return {
+      left: this._marginLeft,
+      right: this._marginRight,
+      top: this._marginTop,
+      bottom: this._marginBottom
+    };
+  }
 
-  // Remove all inline styles.
-  element.removeAttribute('style');
-  this._child.removeAttribute('style');
+  /**
+   * Get instance element's cached position.
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Object}
+   *   - The returned object contains left and top properties which indicate the
+   *     item element's cached position in the grid.
+   */
+  getPosition() {
+    return {
+      left: this._left,
+      top: this._top
+    };
+  }
 
-  // Remove item class.
-  removeClass(element, settings.itemClass);
+  /**
+   * Is the item active?
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Boolean}
+   */
+  isActive() {
+    return this._isActive;
+  }
 
-  // Remove item from Grid instance if it still exists there.
-  index > -1 && grid._items.splice(index, 1);
+  /**
+   * Is the item visible?
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Boolean}
+   */
+  isVisible() {
+    return !!this._visibility && !this._visibility._isHidden;
+  }
 
-  // Remove element from DOM.
-  removeElement && element.parentNode.removeChild(element);
+  /**
+   * Is the item being animated to visible?
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Boolean}
+   */
+  isShowing() {
+    return !!(this._visibility && this._visibility._isShowing);
+  }
 
-  // Reset state.
-  this._isActive = false;
-  this._isDestroyed = true;
-};
+  /**
+   * Is the item being animated to hidden?
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Boolean}
+   */
+  isHiding() {
+    return !!(this._visibility && this._visibility._isHiding);
+  }
+
+  /**
+   * Is the item positioning?
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Boolean}
+   */
+  isPositioning() {
+    return !!(this._layout && this._layout._isActive);
+  }
+
+  /**
+   * Is the item being dragged?
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Boolean}
+   */
+  isDragging() {
+    return !!(this._drag && this._drag._isActive);
+  }
+
+  /**
+   * Is the item being released?
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Boolean}
+   */
+  isReleasing() {
+    return !!(this._release && this._release._isActive);
+  }
+
+  /**
+   * Is the item destroyed?
+   *
+   * @public
+   * @memberof Item.prototype
+   * @returns {Boolean}
+   */
+  isDestroyed() {
+    return this._isDestroyed;
+  }
+
+  /**
+   * Private prototype methods
+   * *************************
+   */
+
+  /**
+   * Recalculate item's dimensions.
+   *
+   * @private
+   * @memberof Item.prototype
+   */
+  _refreshDimensions() {
+    if (this._isDestroyed || this._visibility._isHidden) return;
+
+    const element = this._element;
+    const rect = element.getBoundingClientRect();
+
+    // Calculate width and height.
+    this._width = rect.width;
+    this._height = rect.height;
+
+    // Calculate margins (ignore negative margins).
+    this._marginLeft = Math.max(0, getStyleAsFloat(element, 'margin-left'));
+    this._marginRight = Math.max(0, getStyleAsFloat(element, 'margin-right'));
+    this._marginTop = Math.max(0, getStyleAsFloat(element, 'margin-top'));
+    this._marginBottom = Math.max(0, getStyleAsFloat(element, 'margin-bottom'));
+  }
+
+  /**
+   * Fetch and store item's sort data.
+   *
+   * @private
+   * @memberof Item.prototype
+   */
+  _refreshSortData() {
+    if (this._isDestroyed) return;
+
+    const data = (this._sortData = {});
+    const getters = this.getGrid()._settings.sortData;
+    let prop;
+
+    for (prop in getters) {
+      data[prop] = getters[prop](this, this._element);
+    }
+  }
+
+  /**
+   * Destroy item instance.
+   *
+   * @private
+   * @memberof Item.prototype
+   * @param {Boolean} [removeElement=false]
+   */
+  _destroy(removeElement) {
+    if (this._isDestroyed) return;
+
+    const element = this._element;
+    const grid = this.getGrid();
+    const settings = grid._settings;
+    const index = grid._items.indexOf(this);
+
+    // Destroy handlers.
+    this._release.destroy();
+    this._migrate.destroy();
+    this._layout.destroy();
+    this._visibility.destroy();
+    this._animate.destroy();
+    this._animateChild.destroy();
+    this._drag && this._drag.destroy();
+
+    // Remove all inline styles.
+    element.removeAttribute('style');
+    this._child.removeAttribute('style');
+
+    // Remove item class.
+    removeClass(element, settings.itemClass);
+
+    // Remove item from Grid instance if it still exists there.
+    index > -1 && grid._items.splice(index, 1);
+
+    // Remove element from DOM.
+    removeElement && element.parentNode.removeChild(element);
+
+    // Reset state.
+    this._isActive = false;
+    this._isDestroyed = true;
+  }
+}
 
 export default Item;

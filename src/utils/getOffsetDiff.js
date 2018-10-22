@@ -25,7 +25,7 @@ const offsetDiff = {};
  */
 function getOffset(element, offsetData) {
   const ret = offsetData || {};
-  const rect;
+  let rect;
 
   // Set up return data.
   ret.left = 0;

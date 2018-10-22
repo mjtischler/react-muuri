@@ -15,34 +15,34 @@ const scrollTick = 'scroll';
 
 export default ticker;
 
-export const addLayoutTick = (itemId, readCallback, writeCallback) => {
+export function addLayoutTick(itemId, readCallback, writeCallback) {
   return ticker.add(itemId + layoutTick, readCallback, writeCallback);
 };
 
-export const cancelLayoutTick = (itemId) => {
+export function cancelLayoutTick(itemId) {
   return ticker.cancel(itemId + layoutTick);
 };
 
-export const addVisibilityTick = (itemId, readCallback, writeCallback) => {
+export function addVisibilityTick(itemId, readCallback, writeCallback) {
   return ticker.add(itemId + visibilityTick, readCallback, writeCallback);
 };
 
-export const cancelVisibilityTick = (itemId) => {
+export function cancelVisibilityTick(itemId) {
   return ticker.cancel(itemId + visibilityTick);
 };
 
-export const addMoveTick = (itemId, readCallback, writeCallback) => {
+export function addMoveTick(itemId, readCallback, writeCallback) {
   return ticker.add(itemId + moveTick, readCallback, writeCallback, true);
 };
 
-export const cancelMoveTick = (itemId) => {
+export function cancelMoveTick(itemId) {
   return ticker.cancel(itemId + moveTick);
 };
 
-export const addScrollTick = (itemId, readCallback, writeCallback) => {
+export function addScrollTick(itemId, readCallback, writeCallback) {
   return ticker.add(itemId + scrollTick, readCallback, writeCallback, true);
 };
 
-export const cancelScrollTick = (itemId) => {
+export function cancelScrollTick(itemId) {
   return ticker.cancel(itemId + scrollTick);
 };

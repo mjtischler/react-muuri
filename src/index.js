@@ -1,20 +1,16 @@
-import React, { Component } from 'react'
-import PropTypes from 'prop-types'
+import { Component } from 'react';
+import PropTypes from 'prop-types';
+import Grid from './Grid/Grid';
 
-export default class ExampleComponent extends Component {
+export default class MuuriGrid extends Component {
   static propTypes = {
-    text: PropTypes.string
+    container: PropTypes.string.isRequired,
+    defaultOptions: PropTypes.object
   }
 
-  render() {
-    const {
-      text
-    } = this.props
+  constructor(props) {
+    super(props);
 
-    return (
-      <div className={styles.test}>
-        Example Component: {text}
-      </div>
-    )
+    this.grid = new Grid(props.container, props.defaultOptions);
   }
 }
