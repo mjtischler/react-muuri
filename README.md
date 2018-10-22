@@ -7,7 +7,7 @@
 ## Acknowledgements
 This React implementation is based upon the amazing work done by Haltu Oy and others over at [https://github.com/haltu/muuri](https://github.com/haltu/muuri).
 
-## TODO: Install
+## Install
 
 ```bash
 npm install --save react-muuri
