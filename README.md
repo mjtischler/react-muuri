@@ -15,22 +15,14 @@ npm install --save react-muuri
 
 ## Usage
 
+Sample component:
 ```jsx
 import React, { Component } from 'react'
 import MuuriGrid from 'react-muuri';
+import './MuuriGrid.css'
 
-const styles = {
-    item: {
-      position: 'absolute',  // This is required to be declared explicitly at the `item` level.
-      width: '200px',
-      height: '200px',
-      margin: '20px',
-      backgroundColor: 'blue',
-      color: 'white'
-    }
-}
+class SampleComponent extends Component {
 
-class App extends Component {
   componentDidMount() {
     this.grid = new MuuriGrid({
       container: '.grid',
@@ -43,12 +35,12 @@ class App extends Component {
   render () {
     return (
       <div className="grid">
-        <div className="item" style={styles.item}>
+        <div className="item box1">
           <div className="item-content">
             Box 1
           </div>
         </div>
-        <div className="item" style={styles.item}>
+        <div className="item box2">
           <div className="item-content">
             Box 2
           </div>
@@ -58,7 +50,40 @@ class App extends Component {
   }
 }
 
-export default App;
+export default SampleComponent;
+```
+
+Sample CSS:
+
+```css
+.item {
+  color: white;
+  cursor: pointer;
+  height: 200px;
+  margin: 20px;
+  position: absolute; /* Required by Muuri */
+  width: 200px;
+}
+
+.muuri-item-dragging {
+  z-index: 3;   /* Required by Muuri */
+}
+
+.muuri-item-releasing {
+  z-index: 2; /* Required by Muuri */
+}
+
+.muuri-item-hidden {
+  z-index: 0; /* Required by Muuri */
+}
+
+.box1 {
+  background-color: orange; /* Go */
+}
+
+.box2 {
+  background-color: blue; /* Gators */
+}
 ```
 
 ## License
