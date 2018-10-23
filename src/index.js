@@ -13,6 +13,7 @@ export default class MuuriGrid extends Component {
 
     this.grid = new Grid(props.node, props.defaultOptions);
     this.getMethod = this.getMethod.bind(this);
+    this.getEvent = this.getEvent.bind(this);
   }
 
   getMethod (method, param1, param2, param3, param4) {
@@ -78,5 +79,16 @@ export default class MuuriGrid extends Component {
     }
 
     return result;
+  }
+
+  getEvent (event, param1, param2, callback) {
+    this.grid.on(event, (param1, param2) => {
+      if (callback) {
+        callback();
+        this.grid.synchronize();
+      } else {
+        this.grid.synchronize();
+      }
+    });
   }
 }
