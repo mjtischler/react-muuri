@@ -4,14 +4,14 @@ import Grid from './Grid/Grid';
 
 export default class MuuriGrid extends Component {
   static propTypes = {
-    container: PropTypes.string.isRequired,
+    node: PropTypes.node.isRequired,
     defaultOptions: PropTypes.object
   }
 
   constructor (props) {
     super(props);
 
-    this.grid = new Grid(props.container, props.defaultOptions);
+    this.grid = new Grid(props.node, props.defaultOptions);
     this.getMethod = this.getMethod.bind(this);
   }
 
