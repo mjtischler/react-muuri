@@ -1,4 +1,4 @@
-# react-muuri
+# react-muuri 0.1.0
 
 > A React implementation of Muuri
 
@@ -22,29 +22,55 @@ import MuuriGrid from 'react-muuri';
 import './MuuriGrid.css'
 
 class SampleComponent extends Component {
+  constructor () {
+    super();
 
-  componentDidMount() {
+    this.removeElement = this.removeElement.bind(this);
+  }
+
+  componentDidMount () {
     this.grid = new MuuriGrid({
-      container: '.grid',
+      node: this.gridElement,
       defaultOptions: {
         dragEnabled: true // See Muuri's documentation for other option overrides.
-      }
+      },
     });
+  }
+
+  componentWillUnmount () {
+    this.grid.getMethod('destroy'); // Required: Destroy the grid when the component is unmounted.
+  }
+
+  removeElement () {
+    // An example of how to use `getMethod()` to remove an element from the grid.
+    if (this.gridElement && this.gridElement.children.length) {
+      this.grid.getMethod('remove', this.gridElement.children[0], {removeElements: true})
+    }
   }
 
   render () {
     return (
-      <div className="grid">
-        <div className="item box1">
-          <div className="item-content">
-            Box 1
+      <div>
+        {/* Assign a ref to the grid container so the virtual DOM will ignore it for now (WIP). */}
+        <div ref={gridElement => this.gridElement = gridElement}>
+          {/* Required: `item` and `item-content` classNames */}
+          <div className="item box1">
+            <div className="item-content">
+              Box 1
+            </div>
+          </div>
+          <div className="item box2">
+            <div className="item-content">
+              Box 2
+            </div>
           </div>
         </div>
-        <div className="item box2">
-          <div className="item-content">
-            Box 2
-          </div>
-        </div>
+        <button
+          className="button"
+          onClick={() => this.removeElement()}
+        >
+          Remove 1st Element
+        </button>
       </div>
     )
   }
@@ -78,11 +104,25 @@ Sample CSS:
 }
 
 .box1 {
-  background-color: orange; /* Go */
+  background-color: orange;
 }
 
 .box2 {
-  background-color: blue; /* Gators */
+  background-color: blue;
+}
+
+.button {
+  background-color: gray;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 16px;
+  margin: 20px;
+  padding: 15px;
+  text-align: center;
+  text-decoration: none;
+  width: 200px;
 }
 ```
 
