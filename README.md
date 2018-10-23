@@ -35,6 +35,8 @@ class SampleComponent extends Component {
         dragEnabled: true // See Muuri's documentation for other option overrides.
       },
     });
+
+    this.grid.getEvent('dragEnd') // An example of how to use `getEvent()` to make `synchronize()` update the grid.
   }
 
   componentWillUnmount () {
@@ -104,11 +106,11 @@ Sample CSS:
 }
 
 .box1 {
-  background-color: orange;
+  background-color: orange; /* Go */
 }
 
 .box2 {
-  background-color: blue;
+  background-color: blue; /* Gators */
 }
 
 .button {
