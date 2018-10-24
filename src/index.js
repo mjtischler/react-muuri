@@ -14,6 +14,7 @@ export default class MuuriGrid extends Component {
     this.grid = new Grid(props.node, props.defaultOptions);
     this.getMethod = this.getMethod.bind(this);
     this.getEvent = this.getEvent.bind(this);
+    this.getItemMethod = this.getItemMethod.bind(this);
   }
 
   getMethod (method, param1, param2, param3, param4) {
@@ -85,10 +86,62 @@ export default class MuuriGrid extends Component {
     this.grid.on(event, (param1, param2) => {
       if (callback) {
         callback();
-        this.grid.synchronize();
-      } else {
-        this.grid.synchronize();
       }
+
+      this.grid.synchronize();
     });
+  }
+
+  getItemMethod (method, item) {
+    let result;
+
+    switch (method) {
+      case 'getGrid':
+        result = item.getGrid();
+        break;
+      case 'getElement':
+        result = item.getElement();
+        break;
+      case 'getWidth':
+        result = item.getWidth();
+        break;
+      case 'getHeight':
+        result = item.getHeight();
+        break;
+      case 'getMargin':
+        result = item.getMargin();
+        break;
+      case 'getPosition':
+        result = item.getPosition();
+        break;
+      case 'isActive':
+        result = item.isActive();
+        break;
+      case 'isVisible':
+        result = item.isVisible();
+        break;
+      case 'isShowing':
+        result = item.isShowing();
+        break;
+      case 'isHiding':
+        result = item.isHiding();
+        break;
+      case 'isPositioning':
+        result = item.isPositioning();
+        break;
+      case 'isDragging':
+        result = item.isDragging();
+        break;
+      case 'isReleasing':
+        result = item.isReleasing();
+        break;
+      case 'isDestroyed':
+        result = item.isDestroyed();
+        break;
+      default:
+        break;
+    }
+
+    return result;
   }
 }
