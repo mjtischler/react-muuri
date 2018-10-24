@@ -36,7 +36,8 @@ class SampleComponent extends Component {
       },
     });
 
-    this.grid.getEvent('dragEnd') // An example of how to use `getEvent()` to make `synchronize()` update the grid.
+    // An example of how to use `getEvent()` to make `synchronize()` update the grid.
+    this.grid.getEvent('dragEnd'); 
   }
 
   componentWillUnmount () {
@@ -46,7 +47,7 @@ class SampleComponent extends Component {
   removeElement () {
     // An example of how to use `getMethod()` to remove an element from the grid.
     if (this.gridElement && this.gridElement.children.length) {
-      this.grid.getMethod('remove', this.gridElement.children[0], {removeElements: true})
+      this.grid.getMethod('remove', this.gridElement.children[0], {removeElements: true});
     }
   }
 
@@ -126,6 +127,27 @@ Sample CSS:
   text-decoration: none;
   width: 200px;
 }
+```
+
+### Grid Methods
+You can use any of the available [grid methods](https://github.com/haltu/muuri#grid-methods) provided by Muuri. Pass the method name as a string and up to four parameters as outlined in the particular method's documentation:
+
+```
+this.grid.getMethod('methodName', param1, param2, param3, param4);
+```
+
+### Grid Events
+You can use any of the available [grid events](https://github.com/haltu/muuri#grid-events) provided by Muuri. Pass the event name as a string, up to two parameters, and a callback as outlined in the particular event's documentation:
+
+```
+this.grid.getEvent('eventName', param1, param2, callback);
+```
+
+### Item Methods
+You can use any of the available [item methods](https://github.com/haltu/muuri#item-methods) provided by Muuri. Note that this is part of implementing a custom layout algorithm, the use of which is described in the "Provide a function to use a custom layout algorithm" section of Muuri's documentation. Pass the method name as a string and the item as a string or node as outlined in the documentation:
+
+```
+this.grid.getItemMethod(method, item);
 ```
 
 ## License
