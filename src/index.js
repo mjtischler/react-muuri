@@ -85,7 +85,7 @@ export default class MuuriGrid extends Component {
   getEvent (event, param1, param2, callback) {
     this.grid.on(event, (param1, param2) => {
       if (callback) {
-        callback();
+        callback(param1, param2);
       }
 
       this.grid.synchronize();
