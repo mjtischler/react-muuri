@@ -143,6 +143,12 @@ You can use any of the available [grid events](https://github.com/haltu/muuri#gr
 this.grid.getEvent('eventName', param1, param2, callback);
 ```
 
+If a callback exists, the two parameters included will be passed to the callback as:
+
+```
+callback(param1, param2)
+```
+
 ### Item Methods
 You can use any of the available [item methods](https://github.com/haltu/muuri#item-methods) provided by Muuri. Note that this is part of implementing a custom layout algorithm, the use of which is described in the "Provide a function to use a custom layout algorithm" section of Muuri's documentation. Pass the method name as a string and the item as a string or node as outlined in the documentation:
 
