@@ -1,6 +1,6 @@
 {
   "name": "react-muuri",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A React implementation of Muuri",
   "author": "Matt Tischler",
   "license": "MIT",
@@ -43,6 +43,7 @@
     "eslint-plugin-react": "^7.10.0",
     "eslint-plugin-standard": "^3.1.0",
     "gh-pages": "^1.2.0",
+    "merge": "^1.2.1",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "react-scripts": "^1.1.4",

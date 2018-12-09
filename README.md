@@ -1,4 +1,4 @@
-# react-muuri 0.1.0
+# react-muuri 0.1.1
 
 > A React implementation of Muuri
 
@@ -37,7 +37,7 @@ class SampleComponent extends Component {
     });
 
     // An example of how to use `getEvent()` to make `synchronize()` update the grid.
-    this.grid.getEvent('dragEnd'); 
+    this.grid.getEvent('dragEnd');
   }
 
   componentWillUnmount () {
