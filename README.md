@@ -1,4 +1,4 @@
-# react-muuri 0.2.0
+# react-muuri 0.2.1
 
 > A React implementation of Muuri
 
