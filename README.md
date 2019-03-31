@@ -1,4 +1,4 @@
-# react-muuri 0.2.1
+# react-muuri 0.3.0
 
 > A React implementation of Muuri
 
@@ -154,6 +154,23 @@ You can use any of the available [item methods](https://github.com/haltu/muuri#i
 
 ```
 this.grid.getItemMethod(method, item);
+```
+
+## Running tests
+
+To execute all unit tests:
+```bash
+npm test
+```
+
+To run the tests with coverage:
+```bash
+npm run test:coverage
+```
+
+To watch the testing directory and execute against any changes:
+```bash
+npm run test:watch
 ```
 
 ## License

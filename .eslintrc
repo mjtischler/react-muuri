@@ -2,13 +2,15 @@
   "parser": "babel-eslint",
   "extends": [
     "standard",
-    "standard-react"
+    "standard-react",
+    "plugin:jest/recommended"
   ],
   "env": {
     "es6": true
   },
   "plugins": [
-    "react"
+    "react",
+    "jest"
   ],
   "parserOptions": {
     "sourceType": "module"
