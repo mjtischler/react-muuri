@@ -34,4 +34,4 @@ export default {
     resolve(),
     commonjs()
   ]
-}
+};
